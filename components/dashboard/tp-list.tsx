@@ -8,14 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { formatDate } from "@/lib/utils"
 import { useUserRole } from "@/hooks/use-user-role"
-
-interface Tp {
-  id: string
-  title: string
-  description: string
-  deadline: string
-  created_at: string
-}
+import { Tp } from "@types"
 
 export function TpList() {
   const [tps, setTps] = useState<Tp[]>([])
@@ -108,7 +101,7 @@ export function TpList() {
           </p>
           {isAdmin && (
             <Button asChild>
-              <Link href="/tp/create">Crear Trabajo Práctico</Link>
+              <Link href="/tp/new">Crear Trabajo Práctico</Link>
             </Button>
           )}
         </div>

@@ -16,30 +16,7 @@ import {
 import { TaskForm } from "@/components/task/task-form"
 import { formatDate } from "@/lib/utils"
 import { notifyTaskUpdated } from "@/lib/webhook-service"
-
-interface TaskListProps {
-  teamId: string
-}
-
-interface Task {
-  id: string
-  title: string
-  description: string
-  status: "pending" | "in_progress" | "completed"
-  due_date: string
-  created_by: string
-  team_id: string
-  created_at: string
-  assigned_user?: {
-    user_id: string
-    name: string
-  }
-}
-
-interface Team {
-  id: string
-  name: string
-}
+import { Task, TaskListProps, Team } from "@types"
 
 export function TaskList({ teamId }: TaskListProps) {
   const [tasks, setTasks] = useState<Task[]>([])

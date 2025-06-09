@@ -5,35 +5,19 @@ import { useSupabase } from "@/components/supabase-provider"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Download } from "lucide-react"
+import { Download, Edit, Users } from "lucide-react"
 import { formatDate } from "@/lib/utils"
-
-interface TpDetailsProps {
-  id: string
-}
-
-interface Tp {
-  id: string
-  title: string
-  description: string
-  deadline: string
-  created_at: string
-  created_by: string
-}
-
-interface TpAttachment {
-  id: string
-  tp_id: string
-  file_url: string
-  uploaded_at: string
-}
+import { TpDetailsProps, Tp, TpAttachment } from "@types"
+import Link from "next/link"
 
 export function TpDetails({ id }: TpDetailsProps) {
   const [tp, setTp] = useState<Tp | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [attachments, setAttachments] = useState<TpAttachment[]>([])
-  const { supabase } = useSupabase()
+  const [canEdit, setCanEdit] = useState(false)
+  const [instructors, setInstructors] = useState<any[]>([])
+  const { supabase, session } = useSupabase()
 
   useEffect(() => {
     const fetchTp = async () => {
@@ -63,6 +47,48 @@ export function TpDetails({ id }: TpDetailsProps) {
         }
 
         setAttachments(attachmentsData || [])
+
+        // Check if user can edit this TP
+        if (session) {
+          const { data: canEditData, error: canEditError } = await supabase
+            .rpc('can_edit_tp', { tp_uuid: id });
+
+          if (!canEditError && canEditData) {
+            setCanEdit(true);
+          }
+
+          // Fetch instructors
+          const { data: instructorsData, error: instructorsError } = await supabase
+            .from("tp_instructors")
+            .select(`
+              id,
+              role,
+              user_id
+            `)
+            .eq("tp_id", id);
+
+          if (!instructorsError && instructorsData) {
+            // Get user profiles for each instructor
+            const instructorIds = instructorsData.map(i => i.user_id);
+            const { data: profilesData, error: profilesError } = await supabase
+              .from("user_profiles")
+              .select("id, name, email")
+              .in("id", instructorIds);
+
+            if (!profilesError && profilesData) {
+              const enrichedInstructors = instructorsData.map(instructor => {
+                const profile = profilesData.find(p => p.id === instructor.user_id);
+                return {
+                  ...instructor,
+                  user_profiles: profile || { name: "Usuario desconocido", email: "" }
+                };
+              });
+              setInstructors(enrichedInstructors);
+            } else {
+              setInstructors(instructorsData);
+            }
+          }
+        }
       } catch (err: any) {
         console.error("Error fetching TP:", err)
         setError(err.message)
@@ -72,7 +98,7 @@ export function TpDetails({ id }: TpDetailsProps) {
     }
 
     fetchTp()
-  }, [supabase, id])
+  }, [supabase, id, session])
 
   if (isLoading) {
     return (
@@ -123,15 +149,48 @@ export function TpDetails({ id }: TpDetailsProps) {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>{tp.title}</CardTitle>
-          <Badge variant={isExpired ? "destructive" : "default"}>{isExpired ? "Vencido" : "Activo"}</Badge>
+          <div className="flex-1">
+            <CardTitle>{tp.title}</CardTitle>
+            <CardDescription>Fecha límite: {formatDate(tp.deadline)}</CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant={isExpired ? "destructive" : "default"}>{isExpired ? "Vencido" : "Activo"}</Badge>
+            {canEdit && (
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/tp/${id}/edit`}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Editar
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
-        <CardDescription>Fecha límite: {formatDate(tp.deadline)}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="prose max-w-none dark:prose-invert">
           <p>{tp.description}</p>
         </div>
+
+        {/* Instructors Section */}
+        {instructors.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Instructores
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {instructors.map((instructor) => (
+                <Badge key={instructor.id} variant="outline">
+                  {instructor.user_profiles?.name || "Usuario desconocido"} 
+                  <span className="ml-1 text-xs">
+                    ({instructor.role === 'creator' ? 'Creador' : 
+                      instructor.role === 'teacher' ? 'Profesor' : 'Asistente'})
+                  </span>
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
 
         {attachments.length > 0 && (
           <div className="space-y-2">

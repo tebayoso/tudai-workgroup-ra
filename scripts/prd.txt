@@ -1,0 +1,163 @@
+Product Requirements Document (PRD)
+
+Nombre del producto
+
+TPManager – Plataforma de gestión colaborativa de trabajos prácticos universitarios.
+
+Público objetivo
+
+Estudiantes y docentes de materias universitarias que requieren organizar, distribuir y seguir el progreso de trabajos prácticos en equipo.
+
+Funcionalidades principales
+
+1. Alta de un TP
+
+- Usuarios: Docente, Admin
+- Campos requeridos:
+  - Nombre del TP
+  - Fecha de entrega
+  - Descripción larga (soporte Markdown)
+  - Archivos adjuntos (PDF, ZIP, DOCX, etc.)
+- Ruta: /tp/new
+- Permisos: Solo Docente/Admin
+
+2. Visualización de un TP
+
+- Ruta: /tp/[id]
+- Contenido:
+  - Nombre, descripción, archivos descargables
+  - Lista de equipos registrados
+  - Botón para registrarse o crear equipo (si es alumno)
+- Permisos: Todos los usuarios autenticados
+
+3. Registro de alumno a un TP
+
+- Ruta: /tp/[id]/register
+- Opciones:
+  - Crear equipo nuevo
+  - Unirse a un equipo existente (con código)
+  - Ser asignado aleatoriamente a un equipo
+- Permisos: Estudiante
+
+4. Alta de equipo
+
+- Ruta: /tp/[id]/team/create
+- Campos:
+  - Nombre del equipo
+  - Descripción
+  - Miembros (inicialmente solo el creador)
+- Permisos: Estudiante
+
+5. Asignación automática a un equipo
+
+- Ruta: /tp/[id]/team/auto-assign
+- Algoritmo: Distribución equitativa, crea nuevo equipo si todos están llenos
+- Condiciones: Solo si hay equipos con cupo
+- Permisos: Estudiante
+
+6. Distribución de tareas en equipo
+
+- Ruta: /team/[team_id]/tasks
+- Funcionalidades:
+  - Crear tareas (nombre, descripción, responsable, deadline)
+  - Ver tareas del equipo (estado, responsable)
+  - Editar y eliminar tareas
+- Permisos: Miembros del equipo
+
+7. Carga de progreso y entregables
+
+- Ruta: /team/[team_id]/progress
+- Funcionalidades:
+  - Actualizar estado de tareas (pendiente, en curso, completada)
+  - Comentarios por tarea
+  - Subir entregables parciales
+- Permisos: Miembros del equipo
+
+Roles de usuarios
+
+| Rol        | Permisos                                                                   |
+| ---------- | -------------------------------------------------------------------------- |
+| Admin      | Crear/ver TPs, asignar equipos, ver todo                                   |
+| Docente    | Crear/ver TPs, asignar equipos, ver todo                                   |
+| Estudiante | Registrarse, crear equipos, ver TPs asignados, cargar tareas y entregables |
+
+Estructura de base de datos (Supabase)
+
+Tablas principales
+
+- users:
+  - id (PK)
+  - name
+  - email
+  - role (admin, docente, estudiante)
+
+- tps:
+  - id (PK)
+  - title
+  - description
+  - deadline
+  - attachments (array o relación a storage)
+
+- teams:
+  - id (PK)
+  - tp_id (FK)
+  - name
+  - description
+
+- team_members:
+  - team_id (FK)
+  - user_id (FK)
+
+- tasks:
+  - id (PK)
+  - team_id (FK)
+  - title
+  - description
+  - assigned_to (FK user_id)
+  - status (pendiente, en curso, completada)
+  - due_date
+
+- task_updates:
+  - id (PK)
+  - task_id (FK)
+  - user_id (FK)
+  - status
+  - comment
+  - attachment (opcional)
+
+Rutas y navegación
+
+| Página                | Ruta                      | Permiso         |
+| --------------------- | ------------------------- | --------------- |
+| Home                  | /                         | Público         |
+| Crear TP              | /tp/new                   | Admin, Docente  |
+| Ver TP                | /tp/[id]                  | Todos           |
+| Registro en TP        | /tp/[id]/register         | Estudiante      |
+| Crear equipo          | /tp/[id]/team/create      | Estudiante      |
+| Asignación automática | /tp/[id]/team/auto-assign | Estudiante      |
+| Panel del equipo      | /team/[id]                | Miembros equipo |
+| Tareas del equipo     | /team/[id]/tasks          | Miembros equipo |
+| Progreso del equipo   | /team/[id]/progress       | Miembros equipo |
+
+Tech stack
+
+- Frontend: Next.js 14 (App Router), TailwindCSS, Shadcn UI
+- Auth: Supabase Auth (email, SSO opcional)
+- Backend/DB: Supabase (PostgreSQL, Storage, RLS)
+- Storage: Supabase Buckets (archivos de TP y entregables)
+- State: React Context o Zustand
+- Deploy: Vercel (Next.js) + Supabase
+
+Funcionalidades futuras (fuera de alcance MVP)
+
+- Notificaciones por email
+- Chat dentro de equipos
+- Estadísticas por TP y tareas completadas
+- Exportación de entregables
+
+Consideraciones adicionales
+
+- Accesibilidad: La plataforma debe ser usable en dispositivos móviles y escritorio.
+- Seguridad: Implementar RLS en Supabase para asegurar que solo usuarios autorizados accedan a los datos correspondientes.
+- Soporte de archivos: Validar tipos y tamaño de archivos adjuntos.
+- Internacionalización: El sistema debe estar preparado para soportar múltiples idiomas en el futuro.

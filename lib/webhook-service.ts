@@ -2,23 +2,9 @@
  * Servicio para enviar notificaciones a webhooks externos
  */
 
-const WEBHOOK_URL = "https://webhooks.pox.me/webhook/1a7295b9-5633-4ee2-a80e-93cc7afe6b1a"
+import { TaskNotification } from "@types"
 
-export interface TaskNotification {
-  id: string
-  title: string
-  description: string
-  due_date: string
-  assigned_to?: string // Ahora es opcional ya que no está en la tabla tasks
-  team_id: string
-  created_by: string
-  status: string
-  created_at: string
-  // Información adicional
-  assigned_user_name?: string
-  team_name?: string
-  creator_name?: string
-}
+const WEBHOOK_URL = "https://webhooks.pox.me/webhook/1a7295b9-5633-4ee2-a80e-93cc7afe6b1a"
 
 /**
  * Envía una notificación al webhook cuando se crea una nueva tarea

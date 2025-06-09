@@ -6,11 +6,7 @@ import { createContext, useContext, useEffect, useState } from "react"
 import { createClientComponentClient, type Session } from "@supabase/auth-helpers-nextjs"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/components/ui/use-toast"
-
-type SupabaseContext = {
-  supabase: ReturnType<typeof createClientComponentClient>
-  session: Session | null
-}
+import { SupabaseContext } from "@types"
 
 const Context = createContext<SupabaseContext | undefined>(undefined)
 

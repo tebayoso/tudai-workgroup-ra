@@ -11,10 +11,7 @@ import { useRouter } from "next/navigation"
 import { useSupabase } from "@/components/supabase-provider"
 import { useToast } from "@/components/ui/use-toast"
 import Link from "next/link"
-
-interface RegisterOptionsProps {
-  tpId: string
-}
+import type { RegisterOptionsProps } from "@/@types"
 
 export function RegisterOptions({ tpId }: RegisterOptionsProps) {
   const [teamCode, setTeamCode] = useState("")

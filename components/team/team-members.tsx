@@ -5,18 +5,7 @@ import { useSupabase } from "@/components/supabase-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Card, CardContent } from "@/components/ui/card"
 import { useUserRole } from "@/hooks/use-user-role"
-
-interface TeamMembersProps {
-  teamId: string
-}
-
-interface TeamMember {
-  user_id: string
-  profile: {
-    name: string
-    role: string
-  }
-}
+import { TeamMember, TeamMembersProps } from "@types"
 
 export function TeamMembers({ teamId }: TeamMembersProps) {
   const [members, setMembers] = useState<TeamMember[]>([])
@@ -27,20 +16,24 @@ export function TeamMembers({ teamId }: TeamMembersProps) {
   useEffect(() => {
     const fetchMembers = async () => {
       try {
-        // Modificamos la consulta para no seleccionar la columna 'is_leader' que no existe
+        // Use our new function to get team member profiles
         const { data, error } = await supabase
-          .from("team_members")
-          .select(`
-            user_id,
-            profile:profiles(name, role)
-          `)
-          .eq("team_id", teamId)
+          .rpc('get_team_member_profiles', { team_uuid: teamId });
 
         if (error) {
           throw error
         }
 
-        setMembers(data || [])
+        // Transform the data to match the expected format
+        const transformedMembers = (data || []).map(member => ({
+          user_id: member.user_id,
+          profile: {
+            name: member.name,
+            role: member.role
+          }
+        }));
+
+        setMembers(transformedMembers)
       } catch (error) {
         console.error("Error fetching team members:", error)
       } finally {

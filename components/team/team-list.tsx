@@ -4,19 +4,8 @@ import { useEffect, useState } from "react"
 import { useSupabase } from "@/components/supabase-provider"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Team, TeamListProps } from "@types"
 import Link from "next/link"
-
-interface TeamListProps {
-  tpId: string
-}
-
-interface Team {
-  id: string
-  name: string
-  description: string
-  created_at: string
-  member_count: number
-}
 
 export function TeamList({ tpId }: TeamListProps) {
   const [teams, setTeams] = useState<Team[]>([])

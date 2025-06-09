@@ -8,34 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 import { formatDate } from "@/lib/utils"
-
-interface TaskProgressListProps {
-  teamId: string
-}
-
-interface Task {
-  id: string
-  title: string
-  description: string
-  status: "pending" | "in_progress" | "completed"
-  due_date: string
-  assigned_user?: {
-    user_id: string
-    name: string
-  }
-  updates: TaskUpdate[]
-}
-
-interface TaskUpdate {
-  id: string
-  task_id: string
-  user_id: string
-  comment: string
-  created_at: string
-  user: {
-    name: string
-  }
-}
+import { Task, TaskUpdate, TaskProgressListProps } from "@types"
 
 export function TaskProgressList({ teamId }: TaskProgressListProps) {
   const [tasks, setTasks] = useState<Task[]>([])

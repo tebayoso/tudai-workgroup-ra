@@ -50,7 +50,6 @@ export function LoginForm() {
         <Label htmlFor="email">Correo electrónico</Label>
         <Input
           id="email"
-          value="jorge@pox.me"
           type="email"
           placeholder="tu@email.com"
           value={email}

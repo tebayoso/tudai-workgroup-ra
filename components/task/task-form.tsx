@@ -10,24 +10,10 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
 import { notifyTaskCreated, notifyTaskUpdated } from "@/lib/webhook-service"
-
-interface TaskFormProps {
-  teamId: string
-  taskId?: string
-}
-
-interface TeamMember {
-  user_id: string
-  profile: {
-    name: string
-  }
-}
-
-interface Team {
-  id: string
-  name: string
-}
+import { TaskFormProps, TeamMember, Team } from "@types"
+import { X } from "lucide-react"
 
 export function TaskForm({ teamId, taskId }: TaskFormProps) {
   const [title, setTitle] = useState("")
@@ -35,6 +21,10 @@ export function TaskForm({ teamId, taskId }: TaskFormProps) {
   const [dueDate, setDueDate] = useState("")
   const [assignedTo, setAssignedTo] = useState("")
   const [status, setStatus] = useState("pending")
+  const [priority, setPriority] = useState("medium")
+  const [category, setCategory] = useState("")
+  const [labels, setLabels] = useState<string[]>([])
+  const [newLabel, setNewLabel] = useState("")
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [teamDetails, setTeamDetails] = useState<Team | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -92,9 +82,13 @@ export function TaskForm({ teamId, taskId }: TaskFormProps) {
 
         if (taskData) {
           setTitle(taskData.title)
-          setDescription(taskData.description)
-          setDueDate(taskData.due_date.split("T")[0]) // Extraer solo la fecha
+          setDescription(taskData.description || "")
+          setDueDate(taskData.due_date ? taskData.due_date.split("T")[0] : "") // Extraer solo la fecha
           setStatus(taskData.status)
+          setPriority(taskData.priority || "medium")
+          setCategory(taskData.category || "")
+          setLabels(taskData.labels || [])
+          setAssignedTo(taskData.assigned_to || "")
 
           // Obtener el usuario asignado desde user_tasks
           const { data: userTaskData, error: userTaskError } = await supabase
@@ -141,6 +135,10 @@ export function TaskForm({ teamId, taskId }: TaskFormProps) {
             description,
             due_date: dueDate,
             status,
+            priority,
+            category,
+            labels: JSON.stringify(labels),
+            assigned_to: assignedTo,
             updated_by: session.user.id,
             updated_at: new Date().toISOString(),
           })
@@ -210,6 +208,10 @@ export function TaskForm({ teamId, taskId }: TaskFormProps) {
             description,
             due_date: dueDate,
             status: "pending",
+            priority,
+            category,
+            labels: JSON.stringify(labels),
+            assigned_to: assignedTo,
             team_id: teamId,
             created_by: session.user.id,
           })
@@ -286,6 +288,17 @@ export function TaskForm({ teamId, taskId }: TaskFormProps) {
     }
   }
 
+  const addLabel = () => {
+    if (newLabel.trim() && !labels.includes(newLabel.trim())) {
+      setLabels([...labels, newLabel.trim()])
+      setNewLabel("")
+    }
+  }
+
+  const removeLabel = (labelToRemove: string) => {
+    setLabels(labels.filter(label => label !== labelToRemove))
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
@@ -305,6 +318,64 @@ export function TaskForm({ teamId, taskId }: TaskFormProps) {
       <div className="space-y-2">
         <Label htmlFor="dueDate">Fecha límite</Label>
         <Input id="dueDate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} required />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="priority">Prioridad</Label>
+          <Select value={priority} onValueChange={setPriority}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecciona prioridad" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="low">Baja</SelectItem>
+              <SelectItem value="medium">Media</SelectItem>
+              <SelectItem value="high">Alta</SelectItem>
+              <SelectItem value="critical">Crítica</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="category">Categoría</Label>
+          <Input 
+            id="category" 
+            value={category} 
+            onChange={(e) => setCategory(e.target.value)} 
+            placeholder="ej. Frontend, Backend, Design"
+          />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="labels">Etiquetas</Label>
+        <div className="flex gap-2">
+          <Input
+            id="labels"
+            value={newLabel}
+            onChange={(e) => setNewLabel(e.target.value)}
+            placeholder="Agregar etiqueta"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                addLabel()
+              }
+            }}
+          />
+          <Button type="button" onClick={addLabel} variant="outline">
+            Agregar
+          </Button>
+        </div>
+        {labels.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {labels.map((label) => (
+              <Badge key={label} variant="secondary" className="flex items-center gap-1">
+                {label}
+                <X 
+                  className="h-3 w-3 cursor-pointer" 
+                  onClick={() => removeLabel(label)}
+                />
+              </Badge>
+            ))}
+          </div>
+        )}
       </div>
       <div className="space-y-2">
         <Label htmlFor="assignedTo">Asignada a</Label>
@@ -331,6 +402,7 @@ export function TaskForm({ teamId, taskId }: TaskFormProps) {
             <SelectContent>
               <SelectItem value="pending">Pendiente</SelectItem>
               <SelectItem value="in_progress">En Progreso</SelectItem>
+              <SelectItem value="review">En Revisión</SelectItem>
               <SelectItem value="completed">Completada</SelectItem>
             </SelectContent>
           </Select>

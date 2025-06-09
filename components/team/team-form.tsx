@@ -11,10 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
-
-interface TeamFormProps {
-  tpId: string
-}
+import { TeamFormProps } from "@types"
 
 export function TeamForm({ tpId }: TeamFormProps) {
   const [name, setName] = useState("")

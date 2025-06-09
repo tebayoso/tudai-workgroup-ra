@@ -58,7 +58,7 @@ export function RegisterForm() {
             title: "Advertencia",
             description:
               "Tu cuenta se creó, pero hubo un problema al configurar tu perfil. Algunas funciones podrían no estar disponibles.",
-            variant: "warning",
+            variant: "destructive",
           })
         } else {
           toast({
